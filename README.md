@@ -8,6 +8,8 @@ The output can be accessed by: yourDN/Ystats.html
 ```
 #!/bin/bash
 #
+# Ystats v1.1
+#
 # Script to build server statistics Lstats.html
 #
 #------------------------------------------------------------------------#
