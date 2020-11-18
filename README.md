@@ -63,13 +63,13 @@ cat /dev/null > $webpgpath/$webpgnm  # clear html file
 echo "<html><head><title>Server Stats</title></head><body bgcolor=\"$bgclr\" TEXT=\"$fontcolor\" LANG=\"en-US\" DIR=\"LTR\">" > $webpgpath/$webpgnm
 
 ##'-------------------'
-## Top line date begin
+## BEGIN Top line date
 ##'-------------------'
 echo "<font face=\"Verdana\" size=$fontsz color=\"$fontcolor\"><b>&nbsp;" >> $webpgpath/$webpgnm
 echo $serverid $(date | cut -c 1-10 && date | cut -c 25-28 && echo "-" && date | cut -c 12-23) - Ystats >> $webpgpath/$webpgnm
 echo "</font></b><br>" >> $webpgpath/$webpgnm
 ##'-----------------'
-## Top line date end
+## END Top line date
 ##'-----------------'
 
 
