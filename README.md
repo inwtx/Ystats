@@ -139,7 +139,7 @@ echo "</font></b></td></tr></table><br>" >> $webpgpath/$webpgnm    # end build M
 
 
 ##'------------------------------------'
-echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: horzontal divider for Machine and Netstat/Free
+echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for Machine and Netstat/Free
 ##'------------------------------------'
 
 
@@ -163,7 +163,9 @@ echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
 ##'-----------------'
 
 
-## no NIDDLE divider needed - tables are vertically inclined
+##'------------------------------------'
+## no NIDDLE divider needed - tables are notvertically inclined
+##'------------------------------------'
 
 
 ##'-----------------'
@@ -246,7 +248,7 @@ echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm   # end build Misc
 
 
 ##'------------------------------------'
-echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: horzontal divider for Misc Stats & YAMN Stats
+echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for Misc Stats & YAMN Stats
 ##'------------------------------------'
 
 
@@ -314,7 +316,7 @@ echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm   # end build Misc
 
 
 ##'------------------------------------'
-echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: horzontal divider for YAMN Stats & YAMN
+echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for YAMN Stats & YAMN
 ##'------------------------------------'
 
 
@@ -435,7 +437,7 @@ echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
 
 
 ##'------------------------------------'
-echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: horzontal divider for source I & II table
+echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source I & II table
 ##'------------------------------------'
 
 
@@ -478,7 +480,7 @@ echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
 
 
 ##'------------------------------------'
-echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: horzontal divider for source II & III table
+echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source II & III table
 ##'------------------------------------'
 
 
@@ -555,8 +557,20 @@ cat $filePath/templ.txt
 ## END list Pool table
 ##'---------------------'
 
+
+##'------------------------'
+##'------------------------'
+## END Pool horzontal table
+##'------------------------'
+##'------------------------'
 echo "</td></tr></table>" >> $webpgpath/$webpgnm  # END
 
+
+##'---------------------------'
+##'---------------------------'
+## BEGIN mailq horzontal table
+##'---------------------------'
+##'---------------------------'
 # display mailq begin
 vattest=$(mailq)
 if [[ ! $vattest = "Mail queue is empty" ]]; then
@@ -574,7 +588,13 @@ echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
 fi
 # display mailq end
 
+##'-------------------------'
+##'-------------------------'
+## END mailq horzontal table
+##'-------------------------'
+##'-------------------------'
 echo "</body></html>" >> $webpgpath/$webpgnm
+
 
 rm $filePath/temp.txt
 rm $filePath/temp1.txt
