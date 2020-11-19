@@ -1,14 +1,15 @@
 #!/bin/bash
 #
-# Ystats v1.2
+# Ystats v1.3
 #
 # Script to build server statistics Lstats.html
 #
 #------------------------------------------------------------------------#
 #              --- Server statistics web page builder ---                #
 #                                                                        #
-# The following script can be used to monitor a YAMN remailer servers.   #
+# The following script can be used to monitor a YAMN rmailer servers.    #
 # Several statistics concerning the server and YAMN are displayed.       #
+# It must be run once a minute.                                          #
 #                                                                        #
 # Retrieve stastics for server web page - cron job                       #
 # */1 * * * * /path/to/Ystats.sh                                         #
@@ -19,12 +20,14 @@
 export PATH=$PATH:/sbin
 export PATH=$PATH:/bin
 
-webpgnm="/Ystats.html"
-yamnpath="/home/yamn/yamn"       # no trailing /
-webpgpath="/var/www/html"      # no trailing /
-fileoffset="y"                      # unique internal file names ID
+myemailaddr=""     # your private email address
+webpgnm="/private/Ystats.html"       # webpage name
+yamnpath="/home/yamn/yamn"           # no trailing /
+webpgpath="/var/www/html"            # path to server webpage folder
+fileoffset="y"                       # unique internal file names ID
+sshlog="/var/log/auth.log"
 tempdisp="yes"
-dostats="y"
+dostats="y"  # "$2"
 expdwarn=30
 filePath=${0%/*}  # current file path
 stathighlight="#ff1493"
@@ -49,6 +52,7 @@ remailerstatistics=230
 titlecolor=#f0f0f0
 MachineRogueTableWidth=1112
 MixMiscRemailerTableWidth=870
+
 
 function poolcount(){      #count pool for day
         if [ ! -s $filePath/savepool.$fileoffset.txt ];  then  # create file first time
@@ -86,18 +90,20 @@ function poolcount(){      #count pool for day
         rm $filePath/temppool.$fileoffset.txt
 }
 
+
 cat /dev/null > $webpgpath/$webpgnm  # clear html file
 
 echo "<html><head><title>Server Stats</title></head><body bgcolor=\"$bgclr\" TEXT=\"$fontcolor\" LANG=\"en-US\" DIR=\"LTR\">" > $webpgpath/$webpgnm
 
 ##'-------------------'
-## BEGIN Top line date
+## Top line date begin
 ##'-------------------'
 echo "<font face=\"Verdana\" size=$fontsz color=\"$fontcolor\"><b>&nbsp;" >> $webpgpath/$webpgnm
-echo $serverid $(date | cut -c 1-10 && date | cut -c 25-28 && echo "-" && date | cut -c 12-23) - Ystats >> $webpgpath/$webpgnm
+#echo $serverid $(date | cut -c 1-10 && date | cut -c 25-28 && echo "-" && date | cut -c 12-23) - ${0##*/} >> $webpgpath/$webpgnm
+echo $serverid $(TZ='America/Chicago' date "+%m-%d-%y  -  %r %Z") - ${0##*/} >> $webpgpath/$webpgnm
 echo "</font></b><br>" >> $webpgpath/$webpgnm
 ##'-----------------'
-## END Top line date
+## Top line date end
 ##'-----------------'
 
 
@@ -130,6 +136,8 @@ echo "Domain name: $(dig -x $(hostname -I) +short | awk -F '.' '{print $1"."$2}'
 echo "$(ifconfig | sed '1!d' | awk '{print "MTU: " $4}')<br>" >> $webpgpath/$webpgnm
 
 ## openssl
+#vartemp=$(openssl version | cut -d'L' -f2)
+#echo -n "OpenSSL: $vartemp<br>" >> $webpgpath/$webpgnm
 echo "$(openssl version)" | awk '{print $1" "$2" ("$3" "$4" "$5")<br>"}' >> $webpgpath/$webpgnm
 
 ## last boot time
@@ -191,9 +199,7 @@ echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
 ##'-----------------'
 
 
-##'------------------------------------'
-## no NIDDLE divider needed - tables are notvertically inclined
-##'------------------------------------'
+## no NIDDLE divider needed - tables are vertically inclined
 
 
 ##'-----------------'
@@ -233,6 +239,7 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm  # BEGIN divider ta
 ##'-----------------------'
 ## BEGIN Misc Stats  table
 ##'-----------------------'
+#echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$miscstats\" bgcolor=\"$titlecolor\">
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
 <font face=\"Verdana\" size=$fontsz><b>Misc Stats</b></font></td></tr>
 <tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
@@ -263,6 +270,28 @@ if [[ $(grep -c reject /var/log/mail.log) -gt 0 ]]; then
    echo $tempvar >> $webpgpath/$webpgnm
 fi
 
+#iptables -L PORT_25_80_443_GATE -n > $filePath/temp1.$fileoffset.txt
+#sed -i '1,2d' $filePath/temp1.$fileoffset.txt   # del rec 1 & 2
+#
+#if [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
+#   tempvar="Ports: 25 80 443 closed"
+#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
+#        tempvar="Ports: 25 80 closed"
+#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
+#        tempvar="Ports: 25 443 closed"
+#   elif [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
+#        tempvar="Ports: 80 443 closed"
+#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
+#        tempvar="Ports: 25 closed"
+#   elif [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
+#        tempvar="Ports: 80 closed"
+#   elif [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
+#        tempvar="Ports: 443 closed"
+#else
+#   tempvar="Ports: open"
+#fi
+#echo $tempvar"<br>" >> $webpgpath/$webpgnm
+
 #Hits
 if [ -e $filePath/AccessLogHits.$fileoffset.txt ] && [[ $(cat $filePath/AccessLogHits.$fileoffset.txt | wc -l) -gt 0 ]]; then
    tempvar3=$(wc -l $filePath/AccessLogHits.$fileoffset.txt | awk '{print $1}')
@@ -292,7 +321,9 @@ echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"
 echo "mailq count: " > $filePath/templ.$fileoffset.txt
 vattest=$(mailq)
 if [[ $vattest = "Mail queue is empty" ]]; then
-   cat /dev/null > $filePath/notification.fileoffset.txt
+   cat /dev/null > $filePath/notification
+$fileoffset.txt
+##   echo "$(date '+%a %b %d %G %r %Z') notification.$fileoffset.txt file cleared." >> $filePath/sendmailqerr.log
    echo "0" >> $filePath/templ.$fileoffset.txt
    varzero="y"
    else
@@ -301,7 +332,7 @@ if [[ $vattest = "Mail queue is empty" ]]; then
    varmq=$(mailq | grep -c "^[A-Z0-9]")
 
    if [ $(expr $(date +"%H") % 4) -eq 0 -a $(date +"%M") = "00" -a $varmq -gt 200 ]; then   # mail every 4 hours if mailq > 9
-      mutt -s "Error from $myemailaddr - Mailq backup - $varmq" $myemailaddr <<<"From Ystats.sh: Mailq backup - $varmq"
+      mutt -s "Error from $myemailaddr - Mailq backup - $varmq" $myemailaddr <<<"From /etc/Servstats/Lstats.sh: Mailq backup - $varmq"
    fi
 fi
 
@@ -319,7 +350,7 @@ echo "<br>" >> $webpgpath/$webpgnm
 poolcount
 
 echo "pool count:&nbsp;" > $filePath/templ.$fileoffset.txt
-find $yamnpath/pool -type f | wc -l >> $filePath/templ.$fileoffset.txt
+find /home/yamn/yamn/pool -type f | wc -l >> $filePath/templ.$fileoffset.txt
 sed '1~2 {N;N;s/\n/ /g}' $filePath/templ.$fileoffset.txt > $filePath/templ2.$fileoffset.txt  # concat lines 1 and 2
 cat $filePath/templ2.$fileoffset.txt >> $webpgpath/$webpgnm
 echo "<br>" >> $webpgpath/$webpgnm
@@ -333,7 +364,7 @@ if [ ! -s $filePath/savetodaypoolcnt.$fileoffset.txt ]; then
    echo "0" >> $filePath/savetodaypoolcnt.$fileoffset.txt
 fi
 
-if [ -e $filePath/poolcount.sh ] && [[ $(cat $filePath/savetodaypoolcnt.$fileoffset.txt | wc -l) -gt 0 ]]; then  # running poolcount.sh?
+if [[ $(cat $filePath/savetodaypoolcnt.$fileoffset.txt | wc -l) -gt 0 ]]; then  # running poolcount.sh?
    ptd=$(head -n 1 $filePath/savetodaypoolcnt.$fileoffset.txt)  # get 1st line = total thus far today
    pyd=$(sed -n 2p $filePath/savetodaypoolcnt.$fileoffset.txt)  # get 2nd line = prior
    echo "pool today: &nbsp;$ptd<br>" >> $webpgpath/$webpgnm
@@ -360,6 +391,7 @@ echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"
 <font face=\"Verdana\" size=$fontsz><b>YAMN</b></font></td></tr>
 <tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
+#t5
 ## top stats
 top -b -n1 > $filePath/templ.$fileoffset.txt             # get TOP listing of exes
 var1=$(grep 'PID USER' $filePath/templ.$fileoffset.txt)  # get header line
@@ -370,6 +402,7 @@ sed -i 's/ /\&nbsp;/g' $filePath/templ.$fileoffset.txt
 sed -e 's/$/<br>/' $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm  # append <br>
 echo "<br>" >> $webpgpath/$webpgnm
 
+#t5
 ## start date/time
 #echo "$(grep "yamn" <<< "$(ps -eo lstart,cmd)")" | awk '{print "Started: "$1" "$2" "$3" "$4}' >> $webpgpath/$webpgnm
 echo $(grep "yamn" <<< "$(ps -eo lstart,cmd)") | awk '{print "Started: "$1" "$2" "$3" "$4}' | cut -c 1-28 >> $webpgpath/$webpgnm
@@ -377,6 +410,47 @@ echo $(grep "yamn" <<< "$(ps -eo lstart,cmd)") | awk '{print "Started: "$1" "$2"
 ## md5
 echo "<br>MD5: $(md5sum $yamnpath/yamn)" > $filePath/templ.$fileoffset.txt
 cat $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm
+
+
+### pub key
+#var1=$(head -n 1 /home/yamn/yamn/key.$fileoffset.txt)   # get pubkey header
+#awk '{print "<br>Pubkey: " $3}' <<< "$var1" >> $webpgpath/$webpgnm
+#
+### key(s)
+#var1="<br>Seckey: "
+#grep "Created:" /home/yamn/yamn/secring.mix > $filePath/temp1.$fileoffset.txt  # extract Created: date
+#grep "Expires:" /home/yamn/yamn/secring.mix > $filePath/temp12.$fileoffset.txt  # extract Expires: date
+#
+#cat $filePath/temp12.$fileoffset.txt > $filePath/temp16.$fileoffset.txt
+#sed -i 's/Expires: //g' $filePath/temp16.$fileoffset.txt  # del Expires:
+#
+#paste $filePath/temp1.$fileoffset.txt $filePath/temp12.$fileoffset.txt > $filePath/temp13.$fileoffset.txt  # stack dates side by side
+#sed -i 's/\t/ /g' $filePath/temp13.$fileoffset.txt              # replace tab btwn dates with space
+#sed -i 's/Created: //g' $filePath/temp13.$fileoffset.txt
+#sed -i 's/Expires: //g' $filePath/temp13.$fileoffset.txt
+##t7
+#var7=$(awk 'c&&!--c;/Expires:/{c=1'} /home/yamn/yamn/secring.mix)
+#echo "$var7" > $filePath/temp14.$fileoffset.txt
+#var2=0
+#
+#while read line1; do
+#   ((var2++))
+#   var3=$(awk -F '[ \t\n\v\r.]' '{print $1" "$2}' <<< $line1)  # get 2014-05-08 2014-11-04
+#   var9=$(awk -v var8=$var2 'NR==var8' $filePath/temp16.$fileoffset.txt)  # pull stacked dates from temp12.$fileoffset.txt
+#   var10=$(date +"%G-%m-%d")
+#   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(60*60*24) ))   # calc days between
+##   days=$(( $(date '+%Y-%m-%d') - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
+##   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
+#   var5=$days
+#   var7=$(sed -n $var2'p' $filePath/temp14.$fileoffset.txt)
+#   var4="$var1 $var3 ($var5) ($var7)"                    #<- days remaining calc
+#   var4="$var1 $var3 ($var7)"                    #<- days remaining calc
+#   echo $var4 >> $webpgpath/$webpgnm
+#done<$filePath/temp13.$fileoffset.txt
+
+## pub key
+#//--->>>'TEMPOUT'<<<--- var1=$(head -n 1 /home/yamn/yamn/key.$fileoffset.txt)   # get pubkey header
+#//--->>>'TEMPOUT'<<<--- awk '{print "<br>Pubkey: " $3}' <<< "$var1" >> $webpgpath/$webpgnm
 
 ## key(s)
 #var1="<br>Seckey: "
@@ -402,6 +476,8 @@ while read line1; do
    var9=$(awk -v var8=$var2 'NR==var8' $filePath/temp16.$fileoffset.txt)  # pull stacked dates from temp12.$fileoffset.txt
    var10=$(date +"%G-%m-%d")
    days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(60*60*24) ))   # calc days between
+#   days=$(( $(date '+%Y-%m-%d') - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
+#   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
    var5=$days
    var7=$(sed -n $var2'p' $filePath/temp14.$fileoffset.txt)
    var4="$var1 $var3 ($var5) ($var7)"                    #<- days remaining calc
@@ -464,7 +540,6 @@ sed -i 's/$/<br>/' $filePath/astats.$fileoffset.txt
 
 statcolor
 
-
 rm $filePath/templ.$fileoffset.txt
 cat $filePath/astats.$fileoffset.txt >> $webpgpath/$webpgnm
 echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
@@ -481,7 +556,6 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source I
 ##'-------------------------------'
 ## BEGIN YAMN stat source II table
 ##'-------------------------------'
-if true; then
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
 <font face=\"Verdana\" size=$fontsz><b>YAMN Statistics (sec3)</b></font></td></tr>
 <tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
@@ -562,6 +636,32 @@ echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
 ##'------------------------------'
 
 
+if true; then  ##BEGIN MY_SYN_DROP table delimiter bypass
+##'------------------------------------'
+echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source III and MY_SYN_DROP
+##'------------------------------------'
+
+
+##'-----------------------'
+## BEGIN MY_SYN_DROP table
+##'-----------------------'
+echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
+<font face=\"Verdana\" size=$fontsz><b>MY_SYN_DROP</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+
+echo "$(iptables -L MY_SYN_DROP -n)" > $filePath/templ.$fileoffset.txt
+sed -i 's/$/<br>/' $filePath/templ.$fileoffset.txt   # add <br> to end of every rec
+sed -i '1,2d' $filePath/templ.$fileoffset.txt        # delete lines 1 & 2
+awk '{ print $4 }' $filePath/templ.$fileoffset.txt > $filePath/temp2.$fileoffset.txt
+sed -i 's/$/<br>/g' $filePath/temp2.$fileoffset.txt
+cat $filePath/temp2.$fileoffset.txt >> $webpgpath/$webpgnm
+
+echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
+##'---------------------'
+## END MY_SYN_DROP table
+##'---------------------'
+fi ##END MY_SYN_DROP table delimiter bypass
+
 
 ##'------------------------------------'
 ##'------------------------------------'
@@ -593,6 +693,8 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm  # BEGIN
 cat $filePath/templ.$fileoffset.txt
 
    sed -i 's/\/home\/yamn\/yamn\/pool\///g' $filePath/templ.$fileoffset.txt
+#   sed -i 's/\/var\/mixmaster\/pool\///g'  $filePath/templ.$fileoffset.txt
+#   sed -i 's/\/home\/\/pool\///g'  $filePath/templ.$fileoffset.txt
    sed -e 's/$/<br>/' $filePath/templ.$fileoffset.txt | sort >> $webpgpath/$webpgnm  # append <br> to each line in templ.$fileoffset.txt
    echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
 ##'---------------------'
@@ -600,19 +702,55 @@ cat $filePath/templ.$fileoffset.txt
 ##'---------------------'
 
 
-##'------------------------'
-##'------------------------'
-## END Pool horzontal table
-##'------------------------'
-##'------------------------'
+
+echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE
+
+
+
+# display multiple web page hits begin
+cat /dev/null > $filePath/temp20.$fileoffset.txt
+cat /dev/null > $filePath/temp21.$fileoffset.txt
+##cat /dev/null > $filePath/temp22.$fileoffset.txt
+cat /dev/null > $filePath/AccessLogHits.$fileoffset.txt
+
+cat /var/log/nginx/access.log > $filePath/temp19.$fileoffset.txt
+cat /var/log/nginx/access.log.1 >> $filePath/temp19.$fileoffset.txt
+tail -1000000 $filePath/temp19.$fileoffset.txt | awk '{print $1}' | sort | uniq -c |sort -n > $filePath/temp20.$fileoffset.txt
+
+while read line1; do
+      if [[ $(awk '{print $1}') -gt 40 ]] <<< $line1; then
+         if [[ ! $line1 =~ "95.85.40.163" ]] && [[ ! $line1 =~ "127.0.0.1" ]] && [[ ! $line1 =~ "23.237.26.103" ]] &&  \
+[[ ! $line1 =~ "50.26.242.136" ]] && [[ ! $line1 =~ "185.158.249.133" ]] && [[ ! $line1 =~ "194.76.225.113" ]]; then
+            printf '%-5s %-17s\n' $(awk '{print $1" "$2}' <<< $line1) >> $filePath/temp21.$fileoffset.txt
+         fi
+      fi
+done< $filePath/temp20.$fileoffset.txt # read file line by line
+
+while read line1; do
+      varip=$(awk "NR==1{print;exit}" <<< $line1 | whois $(awk '{print $2}') | grep country | awk '{print $2}' | sed '$!N; /^\(.*\)\n\1$/!P; D')  # pull out country code
+      line2=$line1" "$varip
+      varx1=$(printf '%-5s %-16s %-3s\n' $(awk '{print $1" "$2" "$3}' <<< $line2))
+      varx2=${varx1// /\&nbsp\;}
+      echo $varx2 >> $filePath/AccessLogHits.$fileoffset.txt
+done< $filePath/temp21.$fileoffset.txt
+
+if [ -e $filePath/AccessLogHits.$fileoffset.txt ] && [[ $(cat $filePath/AccessLogHits.$fileoffset.txt | wc -l) -gt 0 ]]; then
+   echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
+   <font face=\"Verdana\" size=$fontsz><b>Web access.log hits &gt 20</b></font></td></tr>
+   <tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+
+   sed -e 's/$/<br>/' $filePath/AccessLogHits.$fileoffset.txt >> $webpgpath/$webpgnm
+   echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
+
+   rm $filePath/temp19.$fileoffset.txt
+   rm $filePath/temp20.$fileoffset.txt
+   rm $filePath/temp21.$fileoffset.txt
+fi
+# display multiple web page hits end
+
 echo "</td></tr></table>" >> $webpgpath/$webpgnm  # END
+# //      <<<--------me only--------me only--------me only
 
-
-##'---------------------------'
-##'---------------------------'
-## BEGIN mailq horzontal table
-##'---------------------------'
-##'---------------------------'
 # display mailq begin
 vattest=$(mailq)
 if [[ ! $vattest = "Mail queue is empty" ]]; then
@@ -630,26 +768,22 @@ echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
 fi
 # display mailq end
 
-##'-------------------------'
-##'-------------------------'
-## END mailq horzontal table
-##'-------------------------'
-##'-------------------------'
 echo "</body></html>" >> $webpgpath/$webpgnm
 
-
-rm $filePath/temp.txt
-rm $filePath/temp1.txt
-rm $filePath/temp2.txt
-rm $filePath/templ.txt
-rm $filePath/templ2.txt
-rm $filePath/temp12.txt
-rm $filePath/temp13.txt
-rm $filePath/temp14.txt
-rm $filePath/temp16.txt
-rm $filePath/temp19.txt
-rm $filePath/temp20.txt
-rm $filePath/temp21.txt
+#if false; then
+rm $filePath/temp.$fileoffset.txt
+rm $filePath/temp1.$fileoffset.txt
+rm $filePath/temp2.$fileoffset.txt
+rm $filePath/templ.$fileoffset.txt
+rm $filePath/templ2.$fileoffset.txt
+rm $filePath/temp12.$fileoffset.txt
+rm $filePath/temp13.$fileoffset.txt
+rm $filePath/temp14.$fileoffset.txt
+rm $filePath/temp16.$fileoffset.txt
+rm $filePath/temp19.$fileoffset.txt
+rm $filePath/temp20.$fileoffset.txt
+rm $filePath/temp21.$fileoffset.txt
+#fi
 
 exit 0
 
