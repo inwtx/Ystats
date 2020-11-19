@@ -636,7 +636,7 @@ echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
 ##'------------------------------'
 
 
-if true; then  ##BEGIN MY_SYN_DROP table delimiter bypass
+if false; then  ##BEGIN MY_SYN_DROP table delimiter bypass
 ##'------------------------------------'
 echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source III and MY_SYN_DROP
 ##'------------------------------------'
