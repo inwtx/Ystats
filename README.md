@@ -333,9 +333,9 @@ if [ ! -s $filePath/savetodaypoolcnt.$fileoffset.txt ]; then
    echo "0" >> $filePath/savetodaypoolcnt.$fileoffset.txt
 fi
 
-if [ -e $filePath/poolcount.sh ] && [[ $(cat $filePath/savetodaypoolcnt,$fileoffset.txt | wc -l) -gt 0 ]]; then  # running poolcount.sh?
-   ptd=$(head -n 1 $filePath/savetodaypoolcnt,$fileoffset.txt)  # get 1st line = total thus far today
-   pyd=$(sed -n 2p $filePath/savetodaypoolcnt,$fileoffset.txt)  # get 2nd line = prior
+if [ -e $filePath/poolcount.sh ] && [[ $(cat $filePath/savetodaypoolcnt.$fileoffset.txt | wc -l) -gt 0 ]]; then  # running poolcount.sh?
+   ptd=$(head -n 1 $filePath/savetodaypoolcnt.$fileoffset.txt)  # get 1st line = total thus far today
+   pyd=$(sed -n 2p $filePath/savetodaypoolcnt.$fileoffset.txt)  # get 2nd line = prior
    echo "pool today: &nbsp;$ptd<br>" >> $webpgpath/$webpgnm
    echo "pool prior: &nbsp;$pyd<br>" >> $webpgpath/$webpgnm
 fi
