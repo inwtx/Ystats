@@ -21,7 +21,7 @@ export PATH=$PATH:/sbin
 export PATH=$PATH:/bin
 
 myemailaddr=""     # your private email address
-webpgnm="/private/Ystats.html"       # webpage name
+webpgnm="/Ystats.html"       # webpage name
 yamnpath="/home/yamn/yamn"           # no trailing /
 webpgpath="/var/www/html"            # path to server webpage folder
 fileoffset="y"                       # unique internal file names ID
