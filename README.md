@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Ystats v1.3
+# Ystats v1.4
 #
 # Script to build server statistics Lstats.html
 #
@@ -55,41 +55,38 @@ MixMiscRemailerTableWidth=870
 
 
 function poolcount(){      #count pool for day
-        if [ ! -s $filePath/savepool.$fileoffset.txt ];  then  # create file first time
+        if [ ! -s $filePath/savepool.$fileoffset.txt ];  then                             # create file first time
             echo "0" > $filePath/savetodaypoolcnt.$fileoffset.txt
             echo "0" >> $filePath/savetodaypoolcnt.$fileoffset.txt
             echo "" > $filePath/savepool.$fileoffset.txt
-            exit 0
+            else
+            if [ $(date +"%H:%M") = "00:00" ]; then  # reset at midnight
+               savetodaypoolcnt=$(head -n 1 $filePath/savetodaypoolcnt.$fileoffset.txt)  # save previous days count
+               echo "0" > $filePath/savetodaypoolcnt.$fileoffset.txt                      # zero new days count
+               echo "$savetodaypoolcnt" >> $filePath/savetodaypoolcnt.$fileoffset.txt    # save previous days count
+               Tsavetodaypoolcnt=0                                             # zero out todays bucket
+               echo "$(ls $mixpath/pool/)" > $filePath/savepool.$fileoffset.txt           # save current pool at BOD for comparison
+               else
+               savetodaypoolcnt=$(head -n 1 $filePath/savetodaypoolcnt.$fileoffset.txt)
+               savepriorpoolcnt=$(sed -n 2p $filePath/savetodaypoolcnt.$fileoffset.txt)
+               echo "$(ls $mixpath/pool/)" > $filePath/temppool.$fileoffset.txt           # get current pool in seq list
+
+               while read line ; do
+                  if grep $line $filePath/savepool.$fileoffset.txt ; then                 # is this message in Tsavepool?
+                     continue                                                  # yes
+                     else
+                    ((savetodaypoolcnt++))                                    # found a new message
+                    echo $line >> $filePath/savepool.$fileoffset.txt                      # Tsave the message file name for future ref
+                  fi
+               done<$filePath/Ttemppool.$fileoffset.txt                                    # read file line by line
+
+               echo $savetodaypoolcnt > $filePath/savetodaypoolcnt.$fileoffset.txt       # save the pool cnt for next chk
+               echo $savepriorpoolcnt >> $filePath/savetodaypoolcnt.$fileoffset.txt      # save the pool cnt for next chk
+
+               rm $filePath/temppool.$fileoffset.txt
+            fi
         fi
-
-        if [ $(date +"%H:%M") = "00:00" ]; then  # reset at midnight
-           savetodaypoolcnt=$(head -n 1 $filePath/savetodaypoolcnt.$fileoffset.txt)   # save previous days count
-           echo "0" > $filePath/savetodaypoolcnt.$fileoffset.txt                      # zero new days count
-           echo "$savetodaypoolcnt" >> $filePath/savetodaypoolcnt.$fileoffset.txt     # save previous days count
-           savetodaypoolcnt=0                                             # zero out todays bucket
-           echo "$(ls $yamnpath/pool/)" > $filePath/savepool.$fileoffset.txt           # save current pool at BOD for comparison
-           exit 0
-        fi
-
-        savetodaypoolcnt=$(head -n 1 $filePath/savetodaypoolcnt.$fileoffset.txt)
-        savepriorpoolcnt=$(sed -n 2p $filePath/savetodaypoolcnt.$fileoffset.txt)
-        echo "$(ls $yamnpath/pool/)" > $filePath/temppool.$fileoffset.txt              # get current pool in seq list
-
-        while read line ; do
-           if grep $line $filePath/savepool.$fileoffset.txt ; then  # is this message in savepool?
-                 continue                                                 # yes
-                 else
-                 ((savetodaypoolcnt++))                                   # found a new message
-                 echo $line >> $filePath/savepool.$fileoffset.txt                     # save the message file name for future ref
-           fi
-        done<$filePath/temppool.$fileoffset.txt                                       # read file line by line
-
-        echo $savetodaypoolcnt > $filePath/savetodaypoolcnt.$fileoffset.txt           # save the pool cnt for next chk
-        echo $savepriorpoolcnt >> $filePath/savetodaypoolcnt.$fileoffset.txt          # save the pool cnt for next chk
-
-        rm $filePath/temppool.$fileoffset.txt
 }
-
 
 cat /dev/null > $webpgpath/$webpgnm  # clear html file
 
