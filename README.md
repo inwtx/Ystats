@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Ystats v1.4
+# Ystats v1.5
 #
 # Script to build server statistics Lstats.html
 #
