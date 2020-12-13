@@ -65,12 +65,12 @@ function poolcount(){      #count pool for day
                echo "0" > $filePath/savetodaypoolcnt.$fileoffset.txt                      # zero new days count
                echo "$savetodaypoolcnt" >> $filePath/savetodaypoolcnt.$fileoffset.txt    # save previous days count
                Tsavetodaypoolcnt=0                                             # zero out todays bucket
-               echo "$(ls $mixpath/pool/)" > $filePath/savepool.$fileoffset.txt           # save current pool at BOD for comparison
-               else
+               echo "$(ls $yamnpath/pool/)" > $filePath/savepool.$fileoffset.txt           # save current pool at BOD for comparison
+            else
                savetodaypoolcnt=$(head -n 1 $filePath/savetodaypoolcnt.$fileoffset.txt)
                savepriorpoolcnt=$(sed -n 2p $filePath/savetodaypoolcnt.$fileoffset.txt)
-               echo "$(ls $mixpath/pool/)" > $filePath/temppool.$fileoffset.txt           # get current pool in seq list
-
+               echo "$(ls $yamnpath/pool/)" > $filePath/temppool.$fileoffset.txt           # get current pool in seq list
+#t5
                while read line ; do
                   if grep $line $filePath/savepool.$fileoffset.txt ; then                 # is this message in Tsavepool?
                      continue                                                  # yes
@@ -78,8 +78,7 @@ function poolcount(){      #count pool for day
                     ((savetodaypoolcnt++))                                    # found a new message
                     echo $line >> $filePath/savepool.$fileoffset.txt                      # Tsave the message file name for future ref
                   fi
-               done<$filePath/Ttemppool.$fileoffset.txt                                    # read file line by line
-
+               done<$filePath/temppool.$fileoffset.txt                                    # read file line by line
                echo $savetodaypoolcnt > $filePath/savetodaypoolcnt.$fileoffset.txt       # save the pool cnt for next chk
                echo $savepriorpoolcnt >> $filePath/savetodaypoolcnt.$fileoffset.txt      # save the pool cnt for next chk
 
@@ -87,6 +86,7 @@ function poolcount(){      #count pool for day
             fi
         fi
 }
+
 
 cat /dev/null > $webpgpath/$webpgnm  # clear html file
 
