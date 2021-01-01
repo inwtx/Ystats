@@ -1,6 +1,7 @@
+```
 #!/bin/bash
 #
-# Ystats v1.5
+# Ystats v1.6
 #
 # Script to build server statistics Lstats.html
 #
@@ -150,7 +151,7 @@ awk -F '[ \t\n\v\r]' '{print "<br>"$2" "$3" "$4" "$5" "$8" "$9" "$10" "$11" "$12
   ###Month to date bandwidth
 if pidof -x "vnstatd" >/dev/null; then
    var1=$(date |  awk '{print $2" "}')
-   var2=$(date +"'%g")
+   var2=$(date +"'%y")
    var3=$var1$var2
    var4=$(grep -e "$var3" <<< $(vnstat -m))
    bline=$(awk '{print "MTD bandwidth: " $1" "$2" - "$9" "$10}' <<<$var4)
@@ -320,7 +321,7 @@ vattest=$(mailq)
 if [[ $vattest = "Mail queue is empty" ]]; then
    cat /dev/null > $filePath/notification
 $fileoffset.txt
-##   echo "$(date '+%a %b %d %G %r %Z') notification.$fileoffset.txt file cleared." >> $filePath/sendmailqerr.log
+##   echo "$(date '+%a %b %d %Y %r %Z') notification.$fileoffset.txt file cleared." >> $filePath/sendmailqerr.log
    echo "0" >> $filePath/templ.$fileoffset.txt
    varzero="y"
    else
@@ -434,7 +435,7 @@ cat $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm
 #   ((var2++))
 #   var3=$(awk -F '[ \t\n\v\r.]' '{print $1" "$2}' <<< $line1)  # get 2014-05-08 2014-11-04
 #   var9=$(awk -v var8=$var2 'NR==var8' $filePath/temp16.$fileoffset.txt)  # pull stacked dates from temp12.$fileoffset.txt
-#   var10=$(date +"%G-%m-%d")
+#   var10=$(date +"%Y-%m-%d")
 #   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(60*60*24) ))   # calc days between
 ##   days=$(( $(date '+%Y-%m-%d') - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
 ##   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
@@ -446,8 +447,8 @@ cat $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm
 #done<$filePath/temp13.$fileoffset.txt
 
 ## pub key
-#//--->>>'TEMPOUT'<<<--- var1=$(head -n 1 /home/yamn/yamn/key.$fileoffset.txt)   # get pubkey header
-#//--->>>'TEMPOUT'<<<--- awk '{print "<br>Pubkey: " $3}' <<< "$var1" >> $webpgpath/$webpgnm
+# var1=$(head -n 1 /home/yamn/yamn/key.$fileoffset.txt)   # get pubkey header
+# awk '{print "<br>Pubkey: " $3}' <<< "$var1" >> $webpgpath/$webpgnm
 
 ## key(s)
 #var1="<br>Seckey: "
@@ -471,7 +472,7 @@ while read line1; do
    ((var2++))
    var3=$(awk -F '[ \t\n\v\r.]' '{print $1" "$2}' <<< $line1)  # get 2014-05-08 2014-11-04
    var9=$(awk -v var8=$var2 'NR==var8' $filePath/temp16.$fileoffset.txt)  # pull stacked dates from temp12.$fileoffset.txt
-   var10=$(date +"%G-%m-%d")
+   var10=$(date +"%Y-%m-%d")
    days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(60*60*24) ))   # calc days between
 #   days=$(( $(date '+%Y-%m-%d') - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
 #   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
@@ -785,3 +786,4 @@ rm $filePath/temp21.$fileoffset.txt
 exit 0
 
 # Ystats.sh
+```
