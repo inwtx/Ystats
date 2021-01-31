@@ -1,7 +1,7 @@
 ```
 #!/bin/bash
 #
-# Ystats v1.6
+# Ystats v1.7
 #
 # Script to build server statistics Lstats.html
 #
