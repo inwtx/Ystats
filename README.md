@@ -94,15 +94,16 @@ cat /dev/null > $webpgpath/$webpgnm  # clear html file
 echo "<html><head><title>Server Stats</title></head><body bgcolor=\"$bgclr\" TEXT=\"$fontcolor\" LANG=\"en-US\" DIR=\"LTR\">" > $webpgpath/$webpgnm
 
 ##'-------------------'
-## Top line date begin
+## BEGIN Top date line
 ##'-------------------'
 echo "<font face=\"Verdana\" size=$fontsz color=\"$fontcolor\"><b>&nbsp;" >> $webpgpath/$webpgnm
-#echo $serverid $(date | cut -c 1-10 && date | cut -c 25-28 && echo "-" && date | cut -c 12-23) - ${0##*/} >> $webpgpath/$webpgnm
-echo $serverid $(TZ='America/Chicago' date "+%m-%d-%y  -  %r %Z") - ${0##*/} >> $webpgpath/$webpgnm
+MLvar=$(date | awk '{print $0" "$2" "$3" "$6" "$4}' | awk '{print "("$1") "$7" "$8", "$9" &nbsp;&nbsp; "$10}')
+MLvar="${MLvar%:*} $(date | awk '{print $5}') &nbsp;&nbsp; ${0##*/}"
+echo "&nbsp;&nbsp;$MLvar" >> $webpgpath/$webpgnm
 echo "</font></b><br>" >> $webpgpath/$webpgnm
-##'-----------------'
-## Top line date end
-##'-----------------'
+##'-------------------'
+##  END Top date line
+##'-------------------'
 
 
 ##'----------------------------------------------'
