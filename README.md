@@ -1,7 +1,7 @@
 ```
 #!/bin/bash
 #
-# Ystats v1.7
+# Ystats v1.8
 #
 # Script to build server statistics Lstats.html
 #
@@ -140,8 +140,10 @@ echo "$(ifconfig | sed '1!d' | awk '{print "MTU: " $4}')<br>" >> $webpgpath/$web
 echo "$(openssl version)" | awk '{print $1" "$2" ("$3" "$4" "$5")<br>"}' >> $webpgpath/$webpgnm
 
 ## last boot time
-varbt=`echo $(who -b)`
-echo ${varbt/system boot/Last system boot:} >> $webpgpath/$webpgnm
+lsvar1=$((who -b) | awk '{print $3}')  # 2021-01-06
+lsvar2=$(date -d $lsvar1 +%b-%d-%Y)    # cvt date to Jan-06-2021
+lsvar3=$((who -b) | awk '{print $4}')  # 12:43
+echo "Last system reboot: $lsvar2 $lsvar3" >> $webpgpath/$webpgnm  # Last system boot: 2020-11-14 15:17
 
 ## up time
 varupt=`echo ${varupt//up/Up}`
