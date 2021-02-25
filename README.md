@@ -96,7 +96,7 @@ echo "<html><head><title>Server Stats</title></head><body bgcolor=\"$bgclr\" TEX
 ##'-------------------'
 ## BEGIN Top date line
 ##'-------------------'
-echo "<font face=\"Verdana\" size=$fontsz color=\"$fontcolor\"><b>&nbsp;" >> $webpgpath/$webpgnm
+echo "<font face=\"Verdana\" size==\"=\"$fontsz\"\" color=\"$fontcolor\"><b>&nbsp;" >> $webpgpath/$webpgnm
 MLvar=$(date | awk '{print $0" "$2" "$3" "$6" "$4}' | awk '{print "("$1") "$7" "$8", "$9" &nbsp;&nbsp; "$10}')
 MLvar="${MLvar%:*} $(date | awk '{print $5}') &nbsp;&nbsp; ${0##*/}"
 echo "&nbsp;&nbsp;$MLvar" >> $webpgpath/$webpgnm
@@ -119,8 +119,8 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm
 ##'-------------------'
 #echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$machinewidth\" bgcolor=\"$titlecolor\">
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<b><font face=\"Verdana\" size=$fontsz><b>Machine</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<b><font face=\"Verdana\" size==\"$fontsz\"><b>Machine</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 ## linux info
 echo "$(lsb_release -d) $(uname -m)<br>" | sed -e 's/Description://g' | tr -d "\t" >> $webpgpath/$webpgnm
@@ -184,8 +184,8 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for Machine 
 ## BEGIN netstat table
 ##'-------------------'
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>Netstats</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>Netstats</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 netstat -vatnp > $filePath/templ.$fileoffset.txt
 sed -i "/tcp6/d" $filePath/templ.$fileoffset.txt            # remove tcp6 lines
 sed -i "/python2.7/d" $filePath/templ.$fileoffset.txt       # remove bitmessage python2.7 messages
@@ -208,8 +208,8 @@ echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
 ##'-----------------'
 # free begin
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>Free</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>Free</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 free > $filePath/templ.$fileoffset.txt
 sed -i 's/ /\&nbsp;/g' $filePath/templ.$fileoffset.txt
@@ -242,8 +242,8 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm  # BEGIN divider ta
 ##'-----------------------'
 #echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$miscstats\" bgcolor=\"$titlecolor\">
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>Misc Stats</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>Misc Stats</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 ## /var/log size begin
 #Size /var/log
@@ -315,8 +315,8 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for Misc Sta
 ##'----------------------'
 #echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$mixmasterwidth\" bgcolor=\"$titlecolor\">
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>YAMN Stats</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN Stats</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 ## mailq
 echo "mailq count: " > $filePath/templ.$fileoffset.txt
@@ -389,8 +389,8 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for YAMN Sta
 ##'----------------'
 #echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$mixmasterwidth\" bgcolor=\"$titlecolor\">
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>YAMN</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 #t5
 ## top stats
@@ -512,8 +512,8 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm
 ## BEGIN YAMN stat source I table
 ##'------------------------------'
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>YAMN Statistics (mixmin)</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN Statistics (mixmin)</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 if [[ $(date +"%M") = "00" ]] || \
    [[ $(date +"%M") = "10" ]] || \
@@ -558,8 +558,8 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source I
 ## BEGIN YAMN stat source II table
 ##'-------------------------------'
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>YAMN Statistics (sec3)</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN Statistics (sec3)</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 if [[ $(date +"%M") = "00" ]] || \
    [[ $(date +"%M") = "10" ]] || \
@@ -602,8 +602,8 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source I
 ## BEGIN YAMN stat source III table
 ##'--------------------------------'
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>YAMN Statistics (talc)</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN Statistics (talc)</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 if [[ $(date +"%M") = "00" ]] || \
    [[ $(date +"%M") = "10" ]] || \
@@ -647,8 +647,8 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source I
 ## BEGIN MY_SYN_DROP table
 ##'-----------------------'
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size=$fontsz><b>MY_SYN_DROP</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" size==\"$fontsz\"><b>MY_SYN_DROP</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 echo "$(iptables -L MY_SYN_DROP -n)" > $filePath/templ.$fileoffset.txt
 sed -i 's/$/<br>/' $filePath/templ.$fileoffset.txt   # add <br> to end of every rec
@@ -684,8 +684,8 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm  # BEGIN
 ## BEGIN list Pool table
 ##'---------------------'
    echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-   <font face=\"Verdana\" size=$fontsz><b>Pool "-" $(find /home/yamn/yamn/pool -type f | wc -l) "-" $(date +"%r")</font></td></tr>
-   <tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+   <font face=\"Verdana\" size==\"$fontsz\"><b>Pool "-" $(find /home/yamn/yamn/pool -type f | wc -l) "-" $(date +"%r")</font></td></tr>
+   <tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 ## put count of each rec type here
    cat /dev/null > $filePath/templ.$fileoffset.txt
@@ -737,8 +737,8 @@ done< $filePath/temp21.$fileoffset.txt
 
 if [ -e $filePath/AccessLogHits.$fileoffset.txt ] && [[ $(cat $filePath/AccessLogHits.$fileoffset.txt | wc -l) -gt 0 ]]; then
    echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-   <font face=\"Verdana\" size=$fontsz><b>Web access.log hits &gt 20</b></font></td></tr>
-   <tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+   <font face=\"Verdana\" size==\"$fontsz\"><b>Web access.log hits &gt 20</b></font></td></tr>
+   <tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
    sed -e 's/$/<br>/' $filePath/AccessLogHits.$fileoffset.txt >> $webpgpath/$webpgnm
    echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
@@ -756,8 +756,8 @@ echo "</td></tr></table>" >> $webpgpath/$webpgnm  # END
 vattest=$(mailq)
 if [[ ! $vattest = "Mail queue is empty" ]]; then
    echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-   <font face=\"Verdana\" size=$fontsz><b>Mailq</b></font></td></tr>
-   <tr><td><font face=\"Courier New\" size=$fontsz color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+   <font face=\"Verdana\" size==\"$fontsz\"><b>Mailq</b></font></td></tr>
+   <tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 echo "$vattest" | sort | uniq -c | sort -nk1 | awk '{$1=$1}1' | sed '/^.\{10,50\}$/!d' | grep -v "Request" > $filePath/templ.$fileoffset.txt
 sed -e 's/$/<br>/' $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm
