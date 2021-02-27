@@ -1,9 +1,9 @@
 ```
 #!/bin/bash
 #
-# Ystats v1.8
+# Ystats v2.0
 #
-# Script to build server statistics Lstats.html
+# Script to build server statistics Ystats.html
 #
 #------------------------------------------------------------------------#
 #              --- Server statistics web page builder ---                #
@@ -27,8 +27,9 @@ yamnpath="/home/yamn/yamn"           # no trailing /
 webpgpath="/var/www/html"            # path to server webpage folder
 fileoffset="y"                       # unique internal file names ID
 sshlog="/var/log/auth.log"
+certpath="/etc/ssl/private/letsencrypt-domain.pem"
 tempdisp="yes"
-dostats="y"  # "$2"
+dostats="y"
 expdwarn=30
 filePath=${0%/*}  # current file path
 stathighlight="#ff1493"
@@ -39,8 +40,9 @@ tempnum=0
 fontsz="2"
 hfontsz="2"
 bgclr=#EBEADF
-fontcolor=#00000040
+fontcolor=#000040
 titlecolor=#f0f0f0
+fontcl=#FFFFFF
 machinewidth=430
 roguewidth=200
 freewidth=230
@@ -50,10 +52,14 @@ iptableswidth=125
 miscstats=200
 mixfiles=160
 remailerstatistics=230
-titlecolor=#f0f0f0
+titlecolor=#990066
 MachineRogueTableWidth=1112
 MixMiscRemailerTableWidth=870
 
+statarray=(
+"http://www.mixmin.net/yamn/mlist.txt;mixmin4096;mixmin"  # mlist url;title
+"https://cloaked.pw/yamn/mlist.txt;cloaked"
+)
 
 function poolcount(){      #count pool for day
         if [ ! -s $filePath/savepool.$fileoffset.txt ];  then                             # create file first time
@@ -71,7 +77,7 @@ function poolcount(){      #count pool for day
                savetodaypoolcnt=$(head -n 1 $filePath/savetodaypoolcnt.$fileoffset.txt)
                savepriorpoolcnt=$(sed -n 2p $filePath/savetodaypoolcnt.$fileoffset.txt)
                echo "$(ls $yamnpath/pool/)" > $filePath/temppool.$fileoffset.txt           # get current pool in seq list
-#t5
+
                while read line ; do
                   if grep $line $filePath/savepool.$fileoffset.txt ; then                 # is this message in Tsavepool?
                      continue                                                  # yes
@@ -96,7 +102,7 @@ echo "<html><head><title>Server Stats</title></head><body bgcolor=\"$bgclr\" TEX
 ##'-------------------'
 ## BEGIN Top date line
 ##'-------------------'
-echo "<font face=\"Verdana\" size==\"=\"$fontsz\"\" color=\"$fontcolor\"><b>&nbsp;" >> $webpgpath/$webpgnm
+echo "<font face=\"Verdana\" size=\"=\"$fontsz\"\" color=\"$fontcolor\"><b>&nbsp;" >> $webpgpath/$webpgnm
 MLvar=$(date | awk '{print $0" "$2" "$3" "$6" "$4}' | awk '{print "("$1") "$7" "$8", "$9" &nbsp;&nbsp; "$10}')
 MLvar="${MLvar%:*} $(date | awk '{print $5}') &nbsp;&nbsp; ${0##*/}"
 echo "&nbsp;&nbsp;$MLvar" >> $webpgpath/$webpgnm
@@ -119,8 +125,8 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm
 ##'-------------------'
 #echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$machinewidth\" bgcolor=\"$titlecolor\">
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<b><font face=\"Verdana\" size==\"$fontsz\"><b>Machine</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<b><font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Machine</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 ## linux info
 echo "$(lsb_release -d) $(uname -m)<br>" | sed -e 's/Description://g' | tr -d "\t" >> $webpgpath/$webpgnm
@@ -134,16 +140,31 @@ echo "Domain name: $(dig -x $(hostname -I) +short | awk -F '.' '{print $1"."$2}'
 # MTU
 echo "$(ifconfig | sed '1!d' | awk '{print "MTU: " $4}')<br>" >> $webpgpath/$webpgnm
 
+## ipv4 TTL & ipv6 HOP count
+echo "ipv4 TTL: $(sysctl net.ipv4.ip_default_ttl | awk '{ print $3 }')<br>" >> $webpgpath/$webpgnm
+#echo "ipv6 HOP: $(sysctl net.ipv6.conf.all.hop_limit | awk '{ print $3 }')<br>" >> $webpgpath/$webpgnm
+
 ## openssl
 #vartemp=$(openssl version | cut -d'L' -f2)
 #echo -n "OpenSSL: $vartemp<br>" >> $webpgpath/$webpgnm
 echo "$(openssl version)" | awk '{print $1" "$2" ("$3" "$4" "$5")<br>"}' >> $webpgpath/$webpgnm
 
+## certificate expdt
+#notAfter=Feb  8 12:19:20 2021 GMT
+SSLvar=$(openssl x509 -enddate -noout -in $certpath)  # /etc/ssl/private/letsencrypt-domain.pem)
+SSLvar=$(cut -d'=' -f2 <<<$SSLvar)
+SSLvar=$(awk '{print $1"-"$2"-"$4" "$3" "$5}' <<<$SSLvar)
+SSLvar1=$(awk '{print $1}' <<<$SSLvar)
+SSLvar2=$(let DIFF=(`date +%s -d $SSLvar1` - `date +%s`)/86400 && echo $DIFF)
+if [[ $SSLvar2 -le 3 ]];then
+   echo "<font color=FF0000><b>Cert expdt: $SSLvar<br></b></font>" >> $webpgpath/$webpgnm
+   else
+   echo "Cert expdt: $SSLvar<br>" >> $webpgpath/$webpgnm
+fi
+
 ## last boot time
-lsvar1=$((who -b) | awk '{print $3}')  # 2021-01-06
-lsvar2=$(date -d $lsvar1 +%b-%d-%Y)    # cvt date to Jan-06-2021
-lsvar3=$((who -b) | awk '{print $4}')  # 12:43
-echo "Last system reboot: $lsvar2 $lsvar3" >> $webpgpath/$webpgnm  # Last system boot: 2020-11-14 15:17
+varbt=`echo $(who -b)`
+echo ${varbt/system boot/Last system boot:} >> $webpgpath/$webpgnm
 
 ## up time
 varupt=`echo ${varupt//up/Up}`
@@ -184,8 +205,8 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for Machine 
 ## BEGIN netstat table
 ##'-------------------'
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>Netstats</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Netstats</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 netstat -vatnp > $filePath/templ.$fileoffset.txt
 sed -i "/tcp6/d" $filePath/templ.$fileoffset.txt            # remove tcp6 lines
 sed -i "/python2.7/d" $filePath/templ.$fileoffset.txt       # remove bitmessage python2.7 messages
@@ -208,8 +229,8 @@ echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
 ##'-----------------'
 # free begin
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>Free</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Free</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 free > $filePath/templ.$fileoffset.txt
 sed -i 's/ /\&nbsp;/g' $filePath/templ.$fileoffset.txt
@@ -240,10 +261,10 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm  # BEGIN divider ta
 ##'-----------------------'
 ## BEGIN Misc Stats  table
 ##'-----------------------'
-#echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$miscstats\" bgcolor=\"$titlecolor\">
+
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>Misc Stats</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Misc Stats</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 ## /var/log size begin
 #Size /var/log
@@ -271,28 +292,6 @@ if [[ $(grep -c reject /var/log/mail.log) -gt 0 ]]; then
    echo $tempvar >> $webpgpath/$webpgnm
 fi
 
-#iptables -L PORT_25_80_443_GATE -n > $filePath/temp1.$fileoffset.txt
-#sed -i '1,2d' $filePath/temp1.$fileoffset.txt   # del rec 1 & 2
-#
-#if [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#   tempvar="Ports: 25 80 443 closed"
-#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 25 80 closed"
-#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 25 443 closed"
-#   elif [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 80 443 closed"
-#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 25 closed"
-#   elif [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 80 closed"
-#   elif [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 443 closed"
-#else
-#   tempvar="Ports: open"
-#fi
-#echo $tempvar"<br>" >> $webpgpath/$webpgnm
-
 #Hits
 if [ -e $filePath/AccessLogHits.$fileoffset.txt ] && [[ $(cat $filePath/AccessLogHits.$fileoffset.txt | wc -l) -gt 0 ]]; then
    tempvar3=$(wc -l $filePath/AccessLogHits.$fileoffset.txt | awk '{print $1}')
@@ -313,18 +312,15 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for Misc Sta
 ##'----------------------'
 ## BEGIN YAMN Stats table
 ##'----------------------'
-#echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$mixmasterwidth\" bgcolor=\"$titlecolor\">
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN Stats</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>YAMN Stats</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 ## mailq
 echo "mailq count: " > $filePath/templ.$fileoffset.txt
 vattest=$(mailq)
 if [[ $vattest = "Mail queue is empty" ]]; then
-   cat /dev/null > $filePath/notification
-$fileoffset.txt
-##   echo "$(date '+%a %b %d %Y %r %Z') notification.$fileoffset.txt file cleared." >> $filePath/sendmailqerr.log
+   cat /dev/null > $filePath/notification$fileoffset.txt
    echo "0" >> $filePath/templ.$fileoffset.txt
    varzero="y"
    else
@@ -387,12 +383,10 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for YAMN Sta
 ##'----------------'
 ## BEGIN YAMN table
 ##'----------------'
-#echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td width=\"$mixmasterwidth\" bgcolor=\"$titlecolor\">
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>YAMN</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
-#t5
 ## top stats
 top -b -n1 > $filePath/templ.$fileoffset.txt             # get TOP listing of exes
 var1=$(grep 'PID USER' $filePath/templ.$fileoffset.txt)  # get header line
@@ -403,58 +397,18 @@ sed -i 's/ /\&nbsp;/g' $filePath/templ.$fileoffset.txt
 sed -e 's/$/<br>/' $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm  # append <br>
 echo "<br>" >> $webpgpath/$webpgnm
 
-#t5
 ## start date/time
-#echo "$(grep "yamn" <<< "$(ps -eo lstart,cmd)")" | awk '{print "Started: "$1" "$2" "$3" "$4}' >> $webpgpath/$webpgnm
 echo $(grep "yamn" <<< "$(ps -eo lstart,cmd)") | awk '{print "Started: "$1" "$2" "$3" "$4}' | cut -c 1-28 >> $webpgpath/$webpgnm
 
 ## md5
 echo "<br>MD5: $(md5sum $yamnpath/yamn)" > $filePath/templ.$fileoffset.txt
 cat $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm
 
-
-### pub key
-#var1=$(head -n 1 /home/yamn/yamn/key.$fileoffset.txt)   # get pubkey header
-#awk '{print "<br>Pubkey: " $3}' <<< "$var1" >> $webpgpath/$webpgnm
-#
-### key(s)
-#var1="<br>Seckey: "
-#grep "Created:" /home/yamn/yamn/secring.mix > $filePath/temp1.$fileoffset.txt  # extract Created: date
-#grep "Expires:" /home/yamn/yamn/secring.mix > $filePath/temp12.$fileoffset.txt  # extract Expires: date
-#
-#cat $filePath/temp12.$fileoffset.txt > $filePath/temp16.$fileoffset.txt
-#sed -i 's/Expires: //g' $filePath/temp16.$fileoffset.txt  # del Expires:
-#
-#paste $filePath/temp1.$fileoffset.txt $filePath/temp12.$fileoffset.txt > $filePath/temp13.$fileoffset.txt  # stack dates side by side
-#sed -i 's/\t/ /g' $filePath/temp13.$fileoffset.txt              # replace tab btwn dates with space
-#sed -i 's/Created: //g' $filePath/temp13.$fileoffset.txt
-#sed -i 's/Expires: //g' $filePath/temp13.$fileoffset.txt
-##t7
-#var7=$(awk 'c&&!--c;/Expires:/{c=1'} /home/yamn/yamn/secring.mix)
-#echo "$var7" > $filePath/temp14.$fileoffset.txt
-#var2=0
-#
-#while read line1; do
-#   ((var2++))
-#   var3=$(awk -F '[ \t\n\v\r.]' '{print $1" "$2}' <<< $line1)  # get 2014-05-08 2014-11-04
-#   var9=$(awk -v var8=$var2 'NR==var8' $filePath/temp16.$fileoffset.txt)  # pull stacked dates from temp12.$fileoffset.txt
-#   var10=$(date +"%Y-%m-%d")
-#   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(60*60*24) ))   # calc days between
-##   days=$(( $(date '+%Y-%m-%d') - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
-##   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
-#   var5=$days
-#   var7=$(sed -n $var2'p' $filePath/temp14.$fileoffset.txt)
-#   var4="$var1 $var3 ($var5) ($var7)"                    #<- days remaining calc
-#   var4="$var1 $var3 ($var7)"                    #<- days remaining calc
-#   echo $var4 >> $webpgpath/$webpgnm
-#done<$filePath/temp13.$fileoffset.txt
-
 ## pub key
 # var1=$(head -n 1 /home/yamn/yamn/key.$fileoffset.txt)   # get pubkey header
 # awk '{print "<br>Pubkey: " $3}' <<< "$var1" >> $webpgpath/$webpgnm
 
 ## key(s)
-#var1="<br>Seckey: "
 var1="<br>Pub/Sec key: "
 grep "Created:" $yamnpath/secring.mix > $filePath/temp1.$fileoffset.txt  # extract Created: date
 grep "Expires:" $yamnpath/secring.mix > $filePath/temp12.$fileoffset.txt  # extract Expires: date
@@ -466,7 +420,6 @@ paste $filePath/temp1.$fileoffset.txt $filePath/temp12.$fileoffset.txt > $filePa
 sed -i 's/\t/ /g' $filePath/temp13.$fileoffset.txt              # replace tab btwn dates with space
 sed -i 's/Created: //g' $filePath/temp13.$fileoffset.txt
 sed -i 's/Expires: //g' $filePath/temp13.$fileoffset.txt
-#t7
 var7=$(awk 'c&&!--c;/Expires:/{c=1'} $yamnpath/secring.mix)
 echo "$var7" > $filePath/temp14.$fileoffset.txt
 var2=0
@@ -477,8 +430,6 @@ while read line1; do
    var9=$(awk -v var8=$var2 'NR==var8' $filePath/temp16.$fileoffset.txt)  # pull stacked dates from temp12.$fileoffset.txt
    var10=$(date +"%Y-%m-%d")
    days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(60*60*24) ))   # calc days between
-#   days=$(( $(date '+%Y-%m-%d') - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
-#   days=$(( ($(date --date=$var9 +%s) - $(date --date=$var10 +%s) )/(3600*24) ))   # calc days between
    var5=$days
    var7=$(sed -n $var2'p' $filePath/temp14.$fileoffset.txt)
    var4="$var1 $var3 ($var5) ($var7)"                    #<- days remaining calc
@@ -507,137 +458,44 @@ echo "</td></tr></table>" >> $webpgpath/$webpgnm
 ##'--------------------------------------'
 echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm
 
+varaYS=0
 
-##'------------------------------'
-## BEGIN YAMN stat source I table
-##'------------------------------'
-echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN Statistics (mixmin)</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+for i in "${statarray[@]}"; do
+   varYS=$i
+   ((varaYS++))
 
-if [[ $(date +"%M") = "00" ]] || \
-   [[ $(date +"%M") = "10" ]] || \
-   [[ $(date +"%M") = "20" ]] || \
-   [[ $(date +"%M") = "30" ]] || \
-   [[ $(date +"%M") = "40" ]] || \
-   [[ $(date +"%M") = "50" ]] || \
-   [[ ! -s $filePath/astats.$fileoffset.txt ]] || [[ $dostats = "y" ]]; then
-   sleep 5  # pause on 1st stat collect for pingers to finish updating their stats
-   wget  --no-check-certificate --timeout=15  -t 1 http://www.mixmin.net/yamn/mlist2.txt -O $filePath/mixmin.$fileoffset.txt
+   echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
+   <font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Remailer Statistics (${varYS##*;})</b></font></td></tr>
+   <tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+
+   if [[ $varaYS -eq 1 ]]; then  #  only pause at 1st stat download
+      sleep 5                    #  pause on 1st stat collect for pingers to finish updating their stats
+   fi
+
+   wget  --no-check-certificate --timeout=15  -t 1 ${varYS%%;*} -O $filePath/varmlist.$fileoffset.txt
    echo $(date) > $filePath/statdate.$fileoffset.txt
-fi
 
-savdate=$(< $filePath/statdate.$fileoffset.txt)
-grep "%"  $filePath/mixmin.$fileoffset.txt | colrm 14 27 > $filePath/astats.$fileoffset.txt
+   savdate=$(< $filePath/statdate.$fileoffset.txt)
+   grep "%"  $filePath/varmlist.$fileoffset.txt | colrm 14 27 > $filePath/astats.$fileoffset.txt
+   sed -i 's/\?/ /g' $filePath/astats.$fileoffset.txt
+   sed -i 's/ *$//' $filePath/astats.$fileoffset.txt
+   sed -i 's/ /\&nbsp;/g' $filePath/astats.$fileoffset.txt
+   sed -i 's/^/\&nbsp;/' $filePath/astats.$fileoffset.txt       # prepend a blank
+   sed -i 's/$/\&nbsp;/' $filePath/astats.$fileoffset.txt       # append a blank
+   sed -i "1i&nbsp;$savdate" $filePath/astats.$fileoffset.txt
+   sed -i 's/$/<br>/' $filePath/astats.$fileoffset.txt
 
-#t3
-sed -i 's/\?/ /g' $filePath/astats.$fileoffset.txt
-sed -i 's/ *$//' $filePath/astats.$fileoffset.txt
-sed -i 's/ /\&nbsp;/g' $filePath/astats.$fileoffset.txt
-sed -i 's/^/\&nbsp;/' $filePath/astats.$fileoffset.txt       # prepend a blank
-sed -i 's/$/\&nbsp;/' $filePath/astats.$fileoffset.txt       # append a blank
-sed -i "1i&nbsp;$savdate" $filePath/astats.$fileoffset.txt
-sed -i 's/$/<br>/' $filePath/astats.$fileoffset.txt
+#  Surround
 
-statcolor
+   rm $filePath/templ.$fileoffset.txt
+   cat $filePath/astats.$fileoffset.txt >> $webpgpath/$webpgnm
+   echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
 
-rm $filePath/templ.$fileoffset.txt
-cat $filePath/astats.$fileoffset.txt >> $webpgpath/$webpgnm
-echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
-##'----------------------------'
-## END YAMN stat source I table
-##'----------------------------'
+echo "</td><td>" >> $webpgpath/$webpgnm
 
+done
 
-##'------------------------------------'
-echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source I & II table
-##'------------------------------------'
-
-
-##'-------------------------------'
-## BEGIN YAMN stat source II table
-##'-------------------------------'
-echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN Statistics (sec3)</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
-
-if [[ $(date +"%M") = "00" ]] || \
-   [[ $(date +"%M") = "10" ]] || \
-   [[ $(date +"%M") = "20" ]] || \
-   [[ $(date +"%M") = "30" ]] || \
-   [[ $(date +"%M") = "40" ]] || \
-   [[ $(date +"%M") = "50" ]] || \
-   [[ ! -s $filePath/astats.$fileoffset.txt ]] || [[ $dostats = "y" ]]; then
-   wget  --no-check-certificate --timeout=15  -t 1 https://cloaked.pw/yamn/mlist2.txt -O $filePath/sec3.$fileoffset.txt
-   echo $(date) > $filePath/statdate.$fileoffset.txt
-fi
-
-savdate=$(< $filePath/statdate.$fileoffset.txt)
-grep "%"  $filePath/sec3.$fileoffset.txt | colrm 14 27 > $filePath/astats.$fileoffset.txt
-sed -i 's/\?/ /g' $filePath/astats.$fileoffset.txt
-sed -i 's/ *$//' $filePath/astats.$fileoffset.txt
-sed -i "s/?/ /15" $filePath/astats.$fileoffset.txt
-sed -i 's/ /\&nbsp;/g' $filePath/astats.$fileoffset.txt
-sed -i 's/^/\&nbsp;/' $filePath/astats.$fileoffset.txt       # prepend a blank
-sed -i 's/$/\&nbsp;/' $filePath/astats.$fileoffset.txt       # append a blank
-sed -i "1i&nbsp;$savdate" $filePath/astats.$fileoffset.txt
-sed -i 's/$/<br>/' $filePath/astats.$fileoffset.txt
-
-statcolor
-
-rm $filePath/templ.$fileoffset.txt
-cat $filePath/astats.$fileoffset.txt >> $webpgpath/$webpgnm
-echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
-##'-----------------------------'
-## END YAMN stat source II table
-##'-----------------------------'
-
-
-##'------------------------------------'
-echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source II & III table
-##'------------------------------------'
-
-
-##'--------------------------------'
-## BEGIN YAMN stat source III table
-##'--------------------------------'
-echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>YAMN Statistics (talc)</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
-
-if [[ $(date +"%M") = "00" ]] || \
-   [[ $(date +"%M") = "10" ]] || \
-   [[ $(date +"%M") = "20" ]] || \
-   [[ $(date +"%M") = "30" ]] || \
-   [[ $(date +"%M") = "40" ]] || \
-   [[ $(date +"%M") = "50" ]] || \
-   [[ ! -s $filePath/astats.$fileoffset.txt ]] || [[ $dostats = "y" ]]; then
-   wget  --no-check-certificate --timeout=15  -t 1 https://talcserver.com/yamn/mlist2.txt -O $filePath/talc.$fileoffset.txt
-   echo $(date) > $filePath/statdate.$fileoffset.txt
-fi
-
-savdate=$(< $filePath/statdate.$fileoffset.txt)
-grep "%"  $filePath/talc.$fileoffset.txt | colrm 14 27 > $filePath/astats.$fileoffset.txt
-sed -i 's/\?/ /g' $filePath/astats.$fileoffset.txt
-sed -i 's/ *$//' $filePath/astats.$fileoffset.txt
-sed -i 's/ /\&nbsp;/g' $filePath/astats.$fileoffset.txt
-sed -i 's/^/\&nbsp;/' $filePath/astats.$fileoffset.txt       # prepend a blank
-sed -i 's/$/\&nbsp;/' $filePath/astats.$fileoffset.txt       # append a blank
-sed -i "1i&nbsp;$savdate" $filePath/astats.$fileoffset.txt
-sed -i 's/$/<br>/' $filePath/astats.$fileoffset.txt
-
-statcolor
-
-rm $filePath/templ.$fileoffset.txt
-
-cat $filePath/astats.$fileoffset.txt >> $webpgpath/$webpgnm
-echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
-##'------------------------------'
-## END YAMN stat source III table
-##'------------------------------'
-
-
-if false; then  ##BEGIN MY_SYN_DROP table delimiter bypass
+if false; then                            
 ##'------------------------------------'
 echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source III and MY_SYN_DROP
 ##'------------------------------------'
@@ -647,8 +505,8 @@ echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for source I
 ## BEGIN MY_SYN_DROP table
 ##'-----------------------'
 echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" size==\"$fontsz\"><b>MY_SYN_DROP</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+<font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>MY_SYN_DROP</b></font></td></tr>
+<tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 echo "$(iptables -L MY_SYN_DROP -n)" > $filePath/templ.$fileoffset.txt
 sed -i 's/$/<br>/' $filePath/templ.$fileoffset.txt   # add <br> to end of every rec
@@ -684,8 +542,8 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm  # BEGIN
 ## BEGIN list Pool table
 ##'---------------------'
    echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-   <font face=\"Verdana\" size==\"$fontsz\"><b>Pool "-" $(find /home/yamn/yamn/pool -type f | wc -l) "-" $(date +"%r")</font></td></tr>
-   <tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+   <font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Pool "-" $(find /home/yamn/yamn/pool -type f | wc -l) "-" $(date +"%r")</font></td></tr>
+   <tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 ## put count of each rec type here
    cat /dev/null > $filePath/templ.$fileoffset.txt
@@ -694,8 +552,6 @@ echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm  # BEGIN
 cat $filePath/templ.$fileoffset.txt
 
    sed -i 's/\/home\/yamn\/yamn\/pool\///g' $filePath/templ.$fileoffset.txt
-#   sed -i 's/\/var\/mixmaster\/pool\///g'  $filePath/templ.$fileoffset.txt
-#   sed -i 's/\/home\/\/pool\///g'  $filePath/templ.$fileoffset.txt
    sed -e 's/$/<br>/' $filePath/templ.$fileoffset.txt | sort >> $webpgpath/$webpgnm  # append <br> to each line in templ.$fileoffset.txt
    echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
 ##'---------------------'
@@ -703,15 +559,12 @@ cat $filePath/templ.$fileoffset.txt
 ##'---------------------'
 
 
-
 echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE
-
 
 
 # display multiple web page hits begin
 cat /dev/null > $filePath/temp20.$fileoffset.txt
 cat /dev/null > $filePath/temp21.$fileoffset.txt
-##cat /dev/null > $filePath/temp22.$fileoffset.txt
 cat /dev/null > $filePath/AccessLogHits.$fileoffset.txt
 
 cat /var/log/nginx/access.log > $filePath/temp19.$fileoffset.txt
@@ -737,8 +590,8 @@ done< $filePath/temp21.$fileoffset.txt
 
 if [ -e $filePath/AccessLogHits.$fileoffset.txt ] && [[ $(cat $filePath/AccessLogHits.$fileoffset.txt | wc -l) -gt 0 ]]; then
    echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-   <font face=\"Verdana\" size==\"$fontsz\"><b>Web access.log hits &gt 20</b></font></td></tr>
-   <tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+   <font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Web access.log hits &gt 20</b></font></td></tr>
+   <tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
    sed -e 's/$/<br>/' $filePath/AccessLogHits.$fileoffset.txt >> $webpgpath/$webpgnm
    echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm
@@ -756,8 +609,8 @@ echo "</td></tr></table>" >> $webpgpath/$webpgnm  # END
 vattest=$(mailq)
 if [[ ! $vattest = "Mail queue is empty" ]]; then
    echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-   <font face=\"Verdana\" size==\"$fontsz\"><b>Mailq</b></font></td></tr>
-   <tr><td><font face=\"Courier New\" size==\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
+   <font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Mailq</b></font></td></tr>
+   <tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
 echo "$vattest" | sort | uniq -c | sort -nk1 | awk '{$1=$1}1' | sed '/^.\{10,50\}$/!d' | grep -v "Request" > $filePath/templ.$fileoffset.txt
 sed -e 's/$/<br>/' $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm
@@ -771,7 +624,6 @@ fi
 
 echo "</body></html>" >> $webpgpath/$webpgnm
 
-#if false; then
 rm $filePath/temp.$fileoffset.txt
 rm $filePath/temp1.$fileoffset.txt
 rm $filePath/temp2.$fileoffset.txt
@@ -784,7 +636,6 @@ rm $filePath/temp16.$fileoffset.txt
 rm $filePath/temp19.$fileoffset.txt
 rm $filePath/temp20.$fileoffset.txt
 rm $filePath/temp21.$fileoffset.txt
-#fi
 
 exit 0
 
