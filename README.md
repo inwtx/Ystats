@@ -7,7 +7,7 @@ The output can be accessed by: yourDN/Ystats.html
   
   
 <p align="left">
-  <img src="/images/ystats.png" width="1218" height="1080">
+  <img src="/images/ystats.png" width="1218" height="1070">
 </p>
   
 ```
