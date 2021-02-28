@@ -15,7 +15,7 @@ The output can be accessed by: yourDN/Ystats.html
 #
 # Ystats v2.1
 #
-# Script to build YAMN server statistics Ystats.html
+# Script to build server statistics Ystats.html
 #
 #------------------------------------------------------------------------#
 #              --- Server statistics web page builder ---                #
@@ -27,6 +27,10 @@ The output can be accessed by: yourDN/Ystats.html
 # Retrieve stastics for server web page - cron job                       #
 # */1 * * * * /path/to/Ystats.sh                                         #
 #                                                                        #
+# Cert expdt: (Must point to server's certificate in certpath=)          #
+# MTD bandwidth: (Must install & run: vnstatd -n)                        #
+#                                                                        #
+# Statistics choice: See the 'statarray' array below for choosing stats. #
 #------------------------------------------------------------------------#
 
 #top
@@ -67,9 +71,14 @@ remailerstatistics=230
 titlecolor=#990066
 MachineRogueTableWidth=1112
 MixMiscRemailerTableWidth=870
+remailerid1="$1"
+remailerid2="$2"
+remailerid3="$3"
+remailerid4="$4"
+remailerid5="$5"
 
 statarray=(
-"http://www.mixmin.net/yamn/mlist.txt;mixmin4096;mixmin"  # mlist url;title
+"http://www.mixmin.net/yamn/mlist.txt;mixmin4096;mixmin"  # 'mlist url';'a title for the stat'
 "https://cloaked.pw/yamn/mlist.txt;cloaked"
 )
 
@@ -124,8 +133,7 @@ function Surround {
        output=$result
    fi
 
-   echo "$output" >> $filePath/templ.txt2
-   cat $filePath/templ.txt2   #//   <------ TEST ONLY   DELETE DELETE DELETE DELETE DELETE DELETE DELETE DELETE DELETE DELETE DELETE DELETE DELETE DELETE DELETE
+   echo "$output" >> $filePath/templ.$fileoffset.txt2
 }
 
 ##'----------------------'
@@ -323,79 +331,6 @@ echo "</td></tr></table>" >> $webpgpath/$webpgnm
 ##'---------------------------------------------------------'
 echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm  # BEGIN divider table for Mix Files, Misc Stats, and Remailer stats
 
-
-##'-----------------------'
-## BEGIN Misc Stats  table
-##'-----------------------'
-echo "<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\"><tr><td bgcolor=\"$titlecolor\">
-<font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Misc Stats</b></font></td></tr>
-<tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
-
-## /var/log size begin
-#Size /var/log
-tempvar=$(du -sh /var/log)
-tempvar=`echo "Size /var/log: " && echo ${tempvar//\/var\/log} && echo "<br>"`
-echo $tempvar >> $webpgpath/$webpgnm
-
-#Website hits
-tempvar2=$(cat /var/log/nginx/access.log | sort | awk '{print $1}' | grep -v 127.0.0.1 | grep -v 50.26.242.136 | grep -v  23.237.26.103 | wc -l)
-tempvar=`echo "Website:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" && \
-echo $(cat /var/log/nginx/access.log | sort | awk '{print $1}' | grep -v 127.0.0.1 | grep -v 50.26.242.136 | grep -v  23.237.26.103 | wc -l) && echo "<br>"`
-
-if [[ $tempvar2 -gt 50 ]]; then
-   echo "<font color=FF0000><b>"$tempvar"</b></font>" >> $webpgpath/$webpgnm  # color 'Website' hits red
-   else
-echo $tempvar >> $webpgpath/$webpgnm
-fi
-
-#mail log rejects
-tempvar=`echo "Rejected mail: " && echo $(grep -c reject /var/log/mail.log) && echo "<br>"`
-
-if [[ $(grep -c reject /var/log/mail.log) -gt 0 ]]; then
-   echo "<font color=FF0000><b>"$tempvar"</b></font>" >> $webpgpath/$webpgnm  # color 'Rejected mail:' red
-   else
-   echo $tempvar >> $webpgpath/$webpgnm
-fi
-
-#iptables -L PORT_25_80_443_GATE -n > $filePath/temp1.$fileoffset.txt
-#sed -i '1,2d' $filePath/temp1.$fileoffset.txt   # del rec 1 & 2
-#
-#if [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#   tempvar="Ports: 25 80 443 closed"
-#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 25 80 closed"
-#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 25 443 closed"
-#   elif [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]] && [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 80 443 closed"
-#   elif [[ $(grep -c "25" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 25 closed"
-#   elif [[ $(grep -c "80" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 80 closed"
-#   elif [[ $(grep -c "443" $filePath/temp1.$fileoffset.txt) -gt 0 ]]; then
-#        tempvar="Ports: 443 closed"
-#else
-#   tempvar="Ports: open"
-#fi
-#echo $tempvar"<br>" >> $webpgpath/$webpgnm
-
-#Hits
-if [ -e $filePath/AccessLogHits.$fileoffset.txt ] && [[ $(cat $filePath/AccessLogHits.$fileoffset.txt | wc -l) -gt 0 ]]; then
-   tempvar3=$(wc -l $filePath/AccessLogHits.$fileoffset.txt | awk '{print $1}')
-   tempvar=`echo "<font color=FF0000><b>Hits:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$tempvar3</b></font>" && echo "<br>"`
-   echo $tempvar >> $webpgpath/$webpgnm
-fi
-echo "</font></td></tr></table><br>" >> $webpgpath/$webpgnm   # end build Misc
-##'--------------------'
-## END Misc Stats table
-##'--------------------'
-
-
-##'------------------------------------'
-echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider for Misc Stats & YAMN Stats
-##'------------------------------------'
-
-
 ##'----------------------'
 ## BEGIN YAMN Stats table
 ##'----------------------'
@@ -584,7 +519,6 @@ echo "</td></tr></table>" >> $webpgpath/$webpgnm
 ##'--------------------------------------'
 echo "<table><tr valign=\"top\"><td>" >> $webpgpath/$webpgnm
 
-#//   <<<--------test-------------test-------------test   02-25-2021 11:58
 varaYS=0
 
 for i in "${statarray[@]}"; do
@@ -595,7 +529,6 @@ for i in "${statarray[@]}"; do
    <font face=\"Verdana\" color=\"$fontcl\" size=\"$fontsz\"><b>Remailer Statistics (${varYS##*;})</b></font></td></tr>
    <tr><td><font face=\"Courier New\" size=\"$fontsz\" color=\"$fontcolor\"><b>" >> $webpgpath/$webpgnm
 
-#t5
    if [[ $varaYS -eq 1 ]]; then  #  only pause at 1st stat download
       sleep 5                    #  pause on 1st stat collect for pingers to finish updating their stats
    fi
@@ -611,18 +544,41 @@ for i in "${statarray[@]}"; do
    sed -i 's/^/\&nbsp;/' $filePath/astats.$fileoffset.txt       # prepend a blank
    sed -i 's/$/\&nbsp;/' $filePath/astats.$fileoffset.txt       # append a blank
    sed -i "1i&nbsp;$savdate" $filePath/astats.$fileoffset.txt
+   cat $filePath/astats.$fileoffset.txt > $filePath/templ.$fileoffset.txt
+
+while read line1; do
+      if [[ $line1 =~ "CST" ]]; then  # test and save remailer date line
+         varM=$line1
+         continue
+      fi
+#t5
+      if [[ $line1 =~ $remailerid1 && ! $remailerid1 == "" ]] || \
+         [[ $line1 =~ $remailerid2 && ! $remailerid2 == "" ]] || \
+         [[ $line1 =~ $remailerid3 && ! $remailerid3 == "" ]] || \
+         [[ $line1 =~ $remailerid4 && ! $remailerid4 == "" ]] || \
+         [[ $line1 =~ $remailerid5 && ! $remailerid5 == "" ]]; then
+         Surround $line1 "" "<font size=\"$fontsz\" color=^ff1493^><u>" "</u></font>"        # surround whole line (keyword="")
+      else
+         echo "$line1" >> $filePath/templ.$fileoffset.txt2
+      fi
+
+done< $filePath/templ.$fileoffset.txt
+
+   sed -i "1i$varM" $filePath/templ.$fileoffset.txt2  # restore remailer date line to 1st rec in file
+   sed -e 's/\^/\"/g' $filePath/templ.$fileoffset.txt2 > $filePath/astats.$fileoffset.txt
    sed -i 's/$/<br>/' $filePath/astats.$fileoffset.txt
 
-#  Surround
-
    rm $filePath/templ.$fileoffset.txt
+   rm $filePath/templ.$fileoffset.txt2
+
    cat $filePath/astats.$fileoffset.txt >> $webpgpath/$webpgnm
    echo "</font></td></tr></table>" >> $webpgpath/$webpgnm
 
-echo "</td><td>" >> $webpgpath/$webpgnm
+#   if [[ $varaLS -ne ${#statarray[*]} ]]; then
+      echo "</td><td>" >> $webpgpath/$webpgnm  # MIDDLE: vertical divider between 1st and 2nd remailer stats tables
+#   fi
 
 done
-
 
 if false; then
 ##'------------------------------------'
