@@ -27,7 +27,7 @@ The output can be accessed by: yourDN/Ystats.html
 # Retrieve stastics for server web page - cron job                        #
 # */1 * * * * /path/to/Ystats.sh                                          #
 # To highlight up to 5 remailer lines in the Remailer Statistics, execute #
-# */1 * * * * /path/to/Lstats.sh name1 name2 ... name5 &> /dev/null       #
+# */1 * * * * /path/to/Ystats.sh name1 name2 ... name5 &> /dev/null       #
 #                                                                         #
 # Cert expdt: (Must point to server's certificate in certpath=)           #
 # MTD bandwidth: (Must install & run: vnstatd -n)                         #
