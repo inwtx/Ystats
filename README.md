@@ -1,3 +1,15 @@
+# Ystats - YAMN Remailer Dashboard
+
+This script can be used by a remailer sysop to monitor their YAMN remailer server and remailer performance.  
+Copy the script code below into a file called Ystats.sh and make it executable (sudo chmod 755 Ystats.sh).  
+Then execute it with a cron as explained in at the top of the script code.  
+The output can be accessed by: yourDN/Ystats.html  
+  
+  
+<p align="left">
+  <img src="/images/ystats.png" width="1218" height="1500">
+</p>
+  
 ```
 #!/bin/bash
 #
