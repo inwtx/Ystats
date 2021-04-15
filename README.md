@@ -419,8 +419,11 @@ sed -e 's/$/<br>/' $filePath/templ.$fileoffset.txt >> $webpgpath/$webpgnm  # app
 echo "<br>" >> $webpgpath/$webpgnm
 
 ## start date/time
-#echo "$(grep "yamn" <<< "$(ps -eo lstart,cmd)")" | awk '{print "Started: "$1" "$2" "$3" "$4}' >> $webpgpath/$webpgnm
-echo $(grep "yamn" <<< "$(ps -eo lstart,cmd)") | awk '{print "Started: "$1" "$2" "$3" "$4}' | cut -c 1-28 >> $webpgpath/$webpgnm
+if [[ $(grep "yamn" <<< "$(ps -eo lstart,cmd)") == "" ]]; then
+   echo "<font color=FF0000><b>Started: yamn not running!</b></font>" >> $webpgpath/$webpgnm
+   else
+   echo "$(grep "yamn" <<< "$(ps -eo lstart,cmd)")" | awk '{print "Started: "$1" "$2" "$3" "$4}' >> $webpgpath/$webpgnm
+fi
 
 ## md5
 echo "<br>MD5: $(md5sum $yamnpath/yamn)" > $filePath/templ.$fileoffset.txt
